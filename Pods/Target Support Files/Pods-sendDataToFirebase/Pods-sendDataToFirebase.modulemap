@@ -1,0 +1,6 @@
+framework module Pods_sendDataToFirebase {
+  umbrella header "Pods-sendDataToFirebase-umbrella.h"
+
+  export *
+  module * { export * }
+}
