@@ -8,6 +8,7 @@
 
 import UIKit
 import Firebase
+import CoreLocation
 
 class ViewController: UIViewController {
 
@@ -23,6 +24,7 @@ class ViewController: UIViewController {
     
 //    @IBOutlet var showProductInfo: UILabel!
     var city = "Hamilton"
+    var store_address = ""
     var product_categories = [String]()
     var products_count = [UInt]()
     override func viewDidLoad() {
@@ -46,6 +48,7 @@ class ViewController: UIViewController {
        
         
         ref.child(city).child(self.storeName.text!).observeSingleEvent(of: .value, with: { (snapshot) in
+            self.store_address = snapshot.childSnapshot(forPath: "StoreAddress").value as! String
             if let productCategories = snapshot.childSnapshot(forPath: "Products").children.allObjects as? [DataSnapshot]{
                 self.product_categories = []
                 self.products_count = []
@@ -67,16 +70,38 @@ class ViewController: UIViewController {
         })
         print(self.product_categories)
         print(self.products_count)
+        print(self.store_address)
 //
-        var count = 0
-        for category in self.product_categories{
-//            print(Int(self.products_count[count]))
-            
-            for i in 0 ... self.products_count[count]-1{
-                productDB.child(category).child(String(i)).child("StoreName").setValue(self.storeName.text!)
+        
+        var temp = CLGeocoder().geocodeAddressString(self.store_address) { (placemarks, error) in
+            guard
+                let placemarks = placemarks,
+                let location = placemarks.first?.location
+                else {
+                    print("No location found")
+                    return
             }
-            count = count+1
+            
+//            print(location.coordinate.latitude)
+//            print(location.coordinate.longitude)
+            
+            var count = 0
+            for category in self.product_categories{
+                //            print(Int(self.products_count[count]))
+                
+                for i in 0 ... self.products_count[count]-1{
+                    productDB.child(category).child(String(i)).child("StoreName").setValue(self.storeName.text!)
+                    productDB.child(category).child(String(i)).child("_geoloc").child("lat").setValue(location.coordinate.latitude)
+                    productDB.child(category).child(String(i)).child("_geoloc").child("lng").setValue(location.coordinate.longitude)
+
+                }
+                count = count+1
+            }
         }
+        
+        
+        
+        
 //        self.product_categories = []
 //        self.products_count = []
 //        TODO: Saving values in Database
