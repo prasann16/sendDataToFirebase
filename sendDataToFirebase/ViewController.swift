@@ -26,6 +26,7 @@ class ViewController: UIViewController {
     var city = "Hamilton"
     var store_address = ""
     var product_categories = [String]()
+    var price = [Double]()
     var products_count = [UInt]()
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,6 +53,7 @@ class ViewController: UIViewController {
             if let productCategories = snapshot.childSnapshot(forPath: "Products").children.allObjects as? [DataSnapshot]{
                 self.product_categories = []
                 self.products_count = []
+                self.price = []
                 for productCategory in productCategories{
                     self.product_categories.append(productCategory.key)
 //                    print(productCategory.childrenCount)
@@ -59,17 +61,29 @@ class ViewController: UIViewController {
                     if let products = productCategory.children.allObjects as? [DataSnapshot]{
 
                         for product in products{
-//                            product.setValue(self.storeName.text!, forKey: "productImage_url")
-//                            print("........................................")
-
+//                            print(product.childSnapshot(forPath: "price"))
+                            
+                            //TODO: Change price to a double and store it in array
+                            if let str = product.childSnapshot(forPath: "price").value as? String{
+                                let formatter = NumberFormatter()
+                                formatter.numberStyle = .currency
+                                
+                                let number = formatter.number(from: str)
+                                let amount = number?.doubleValue
+                                //        print(amount as! Double)
+                                self.price.append(amount as! Double)
+                                
+                            }
+                            
                         }
                     }
                 }
             }
-            
         })
+        
         print(self.product_categories)
         print(self.products_count)
+        print(self.price)
         print(self.store_address)
 //
         
@@ -86,11 +100,18 @@ class ViewController: UIViewController {
 //            print(location.coordinate.longitude)
             
             var count = 0
+            var j = 0
             for category in self.product_categories{
                 //            print(Int(self.products_count[count]))
                 
                 for i in 0 ... self.products_count[count]-1{
+                    j = j+1
+//                    print(self.price[j-1])
                     productDB.child(category).child(String(i)).child("StoreName").setValue(self.storeName.text!)
+                    productDB.child(category).child(String(i)).child("productCategory").setValue(category)
+                    if(self.price.count != 0){
+                        productDB.child(category).child(String(i)).child("price").setValue(self.price[j-1])
+                    }
                     productDB.child(category).child(String(i)).child("_geoloc").child("lat").setValue(location.coordinate.latitude)
                     productDB.child(category).child(String(i)).child("_geoloc").child("lng").setValue(location.coordinate.longitude)
 
